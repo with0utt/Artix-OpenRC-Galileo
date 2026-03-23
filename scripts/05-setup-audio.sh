@@ -32,7 +32,7 @@ echo "  ⚠️  NOT linking mic filter chain (requires librnnoise_ladspa.so)"
 echo "[4/6] Activating Galileo WirePlumber configs..."
 sudo mkdir -p /usr/share/wireplumber/wireplumber.conf.d
 for f in /usr/share/wireplumber/hardware-profiles/valve-galileo/wireplumber.conf.d/*.conf; do
-    sudo ln -sf "$f" /usr/share/wireplumber/wireplumber.conf.d/$(basename "$f")
+    sudo ln -sf "$f" "/usr/share/wireplumber/wireplumber.conf.d/$(basename "$f")"
 done
 
 # Fix UCM profile

@@ -23,9 +23,10 @@ on the Steam Deck OLED, with causes and solutions.
 - **Cause**: Valve's kernel source was written for older GCC; `const char *` strictness
   changed in GCC 15.
 - **Solution**:
+
   ```bash
   find tools/ -name &quot;Makefile&quot; -exec sed -i &#x27;s/-Werror//g&#x27; {} +
-```
+  ```
 
 ### 4. `makepkg` wipes source modifications on rebuild
 
@@ -85,9 +86,11 @@ on the Steam Deck OLED, with causes and solutions.
 - **Cause**: Microphone filter chain references a missing LADSPA plugin; module is marked
   mandatory.
 - **Solution**:
-```bash
-sudo rm /usr/share/pipewire/pipewire.conf.d/filter-chain.conf
-```
+
+  ```bash
+  sudo rm /usr/share/pipewire/pipewire.conf.d/filter-chain.conf
+  ```
+
   Keep only the speaker filter chain (`filter-chain-sink.conf`).
 
 ### 12. UCM fails: "Failed to enable UCM device Speaker"
@@ -95,9 +98,10 @@ sudo rm /usr/share/pipewire/pipewire.conf.d/filter-chain.conf
 - **Cause**: UCM `HiFi.conf` references `/etc/dsmparam.bin` (factory calibration) which
   doesn't exist.
 - **Solution**: Comment out the `cset-tlv` line referencing `dsmparam.bin`:
-```bash
-sudo sed -i &#x27;/dsmparam/s/^/# /&#x27; /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi.conf
-```
+
+  ```bash
+  sudo sed -i &#x27;/dsmparam/s/^/# /&#x27; /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi.conf
+  ```
 
 ### 13. `speaker-test` produces no sound through PipeWire
 
@@ -108,9 +112,10 @@ sudo sed -i &#x27;/dsmparam/s/^/# /&#x27; /usr/share/alsa/ucm2/conf.d/sof-nau882
 
 - **Cause**: `pulseaudio-bluetooth` and `pulseaudio-zeroconf` depend on `pulseaudio`.
 - **Solution**:
-```bash
-sudo pacman -Rdd pulseaudio pulseaudio-bluetooth pulseaudio-zeroconf jack2
-```
+
+  ```bash
+  sudo pacman -Rdd pulseaudio pulseaudio-bluetooth pulseaudio-zeroconf jack2
+  ```
 
 ### 15. File conflicts during PipeWire install
 
@@ -172,11 +177,12 @@ sudo pacman -Rdd pulseaudio pulseaudio-bluetooth pulseaudio-zeroconf jack2
 
 - **Cause**: `/sys/class/backlight/amdgpu_bl0/brightness` not writable by user.
 - **Solution**: Create a udev rule granting the `video` group write access:
-```bash
-sudo cp configs/90-backlight.rules /etc/udev/rules.d/
-sudo udevadm control --reload-rules
-sudo udevadm trigger --subsystem-match=backlight
-```
+
+  ```bash
+  sudo cp configs/90-backlight.rules /etc/udev/rules.d/
+  sudo udevadm control --reload-rules
+  sudo udevadm trigger --subsystem-match=backlight
+  ```
 
 ### 25. Refresh rate shows 60 Hz instead of 90 Hz
 

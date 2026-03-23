@@ -11,4 +11,3 @@ exclude=SC2181
 # Enable optional checks
 enable=avoid-nullary-conditions
 enable=check-unassigned-uppercase
-enable=require-variable-braces

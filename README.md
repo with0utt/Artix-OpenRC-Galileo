@@ -23,14 +23,17 @@ failure, and fix encountered during the process.
 ## Prerequisites
 
 ### Hardware
+
 - Steam Deck **OLED** (Galileo — this guide does NOT apply to the LCD model)
 
 ### Software (on the Deck or a build machine)
+
 - A working **Artix Linux OpenRC** base installation (with `base-devel` installed)
 - Internet connectivity (Ethernet adapter or USB tethering recommended for initial setup)
 - ~20 GB free disk space for kernel compilation
 
 ### Required Packages (installed during the guide)
+
 - `base-devel bc cpio xmlto python pahole` (kernel build)
 - `networkmanager elogind dbus sddm` (with OpenRC counterparts)
 - `mesa vulkan-radeon` (graphics)
@@ -38,6 +41,7 @@ failure, and fix encountered during the process.
 - `steam gamescope mangohud brightnessctl` (gaming)
 
 ### Downloads Needed
+
 1. **Valve Neptune kernel source**: `linux-neptune-615-6.15.8.valve1-2.src.tar.gz` from
    `https://steamdeck-packages.steamos.cloud/archlinux-mirror/sources/jupiter-staging/`
 2. **SteamOS OLED recovery image**: `steamdeck-repair-20250521.10-3.7.7` from

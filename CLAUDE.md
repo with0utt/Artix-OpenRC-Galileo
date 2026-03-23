@@ -232,6 +232,7 @@ echo "=== Phase complete! ==="
 ### Documentation Conventions
 
 Phase guides should include:
+
 - Overview and purpose
 - Prerequisites
 - Step-by-step instructions (link to scripts)
@@ -339,6 +340,7 @@ Example: `git commit -m "scripts: improve error messages in phase 03-core-servic
 ### Build-Time Dependencies
 
 Only needed during Phase 1 (kernel build):
+
 - `base-devel`, `bc`, `cpio`, `xmlto`, `python`, `pahole` (kernel build tools)
 - `wget` (firmware downloads)
 - `sed` (config file patching)
@@ -346,31 +348,37 @@ Only needed during Phase 1 (kernel build):
 ### Important Gotchas
 
 ⚠️ **Kernel must be compiled and booted first**
+
 - Phase 1 output is a compiled kernel image
 - All subsequent phases assume you're already running the Neptune kernel
 - Cannot skip Phase 1
 
 ⚠️ **OpenRC, NOT systemd**
+
 - Don't use `systemctl enable service` (wrong!)
 - Use `rc-update add service default` (correct)
 - System initialization is fundamentally different
 
 ⚠️ **Steam Deck OLED specific**
+
 - Guide assumes Galileo hardware
 - May fail on other Steam Deck models or completely different devices
 - Firmware extraction (Phase 2) is specific to OLED
 
 ⚠️ **Hardware-specific assumptions**
+
 - Assumes AMD GPU (Mesa, Vulkan work out of box)
 - Assumes specific Wi-Fi and audio chips
 - Won't work on systems with different hardware
 
 ⚠️ **PipeWire is complex and fragile**
+
 - Phase 5 involves many interdependent components (PipeWire, Wireplumber, plugins, ALSA config)
 - One misconfigured file = no audio
 - Requires careful attention to order of operations
 
 **Where to learn more:**
+
 - Each phase guide (in `docs/`) explains dependencies as you encounter them
 - `TROUBLESHOOTING.md` documents common issues
 
@@ -445,6 +453,7 @@ Requires access to **Steam Deck OLED hardware or compatible VM**:
 ### Testing Checklist for Any Change
 
 Before committing, verify:
+
 - [ ] Relevant phase guide still makes sense
 - [ ] Cross-references updated if needed
 - [ ] `TROUBLESHOOTING.md` updated if new issues might occur
@@ -496,6 +505,7 @@ Description: Clear, specific action taken
 ```
 
 **Examples:**
+
 - `docs: clarify kernel build prerequisites in phase 01`
 - `scripts: improve error messages in phase 03-core-services`
 - `configs: add PipeWire config for spatial audio`
