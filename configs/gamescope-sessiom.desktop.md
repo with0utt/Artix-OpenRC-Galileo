@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Steam Game Mode
+Comment=Launch Steam in Gamescope (SteamOS-like)
+Exec=/usr/share/gamescope-custom/gamescope-session.sh
+Type=Application
+DesktopNames=gamescope
