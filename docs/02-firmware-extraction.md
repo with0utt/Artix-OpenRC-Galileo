@@ -19,7 +19,7 @@ Look for: `steamdeck-repair-20250521.10-3.7.7` (or newer OLED-specific image).
 
 ```bash
 sudo losetup -Pf steamdeck-repair-*.img
-LOOPDEV=$(losetup -l | grep steamdeck | awk &#x27;{print $1}&#x27;)
+LOOPDEV=$(losetup -l | grep steamdeck | awk '{print $1}')
 sudo mkdir -p /mnt/steamos
 sudo mount ${LOOPDEV}p3 /mnt/steamos
 ```
@@ -45,7 +45,7 @@ sudo cp /mnt/steamos/usr/lib/firmware/amd/sof/sof-vangogh-data.bin /lib/firmware
 sudo cp /mnt/steamos/usr/lib/firmware/amd/sof/sof-vangogh.ldc /lib/firmware/amd/sof/
 sudo cp /mnt/steamos/usr/lib/firmware/amd/sof-tplg/sof-vangogh-nau8821-max.tplg /lib/firmware/amd/sof-tplg/
 
-# Valve&#x27;s LV2 DSP plugins
+# Valve's LV2 DSP plugins
 sudo mkdir -p /usr/lib/lv2
 sudo cp -r /mnt/steamos/usr/lib/lv2/valve_deck_speakers.lv2 /usr/lib/lv2/
 sudo cp -r /mnt/steamos/usr/lib/lv2/valve_deck_microphone.dsp /usr/lib/lv2/
@@ -60,7 +60,7 @@ sudo cp -r /mnt/steamos/usr/share/wireplumber/hardware-profiles /usr/share/wirep
 
 # Hardware support scripts
 sudo mkdir -p /usr/lib/hwsupport
-sudo cp -r /mnt/steamos/usr/lib/hwsupport/* /usr/lib/hwsupport/ 2&gt;/dev/null
+sudo cp -r /mnt/steamos/usr/lib/hwsupport/* /usr/lib/hwsupport/ 2>/dev/null
 ```
 
 ### 5. Clean Up

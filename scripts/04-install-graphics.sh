@@ -7,6 +7,7 @@ set -euo pipefail
 
 echo "=== Phase 4: Graphics Stack ==="
 
+echo "[1/1] Installing Mesa, Vulkan, and AMD GPU drivers..."
 sudo pacman -S --needed --noconfirm \
     mesa lib32-mesa \
     vulkan-radeon lib32-vulkan-radeon \

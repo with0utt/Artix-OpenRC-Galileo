@@ -25,7 +25,7 @@ on the Steam Deck OLED, with causes and solutions.
 - **Solution**:
 
   ```bash
-  find tools/ -name &quot;Makefile&quot; -exec sed -i &#x27;s/-Werror//g&#x27; {} +
+  find tools/ -name "Makefile" -exec sed -i 's/-Werror//g' {} +
   ```
 
 ### 4. `makepkg` wipes source modifications on rebuild
@@ -72,11 +72,6 @@ on the Steam Deck OLED, with causes and solutions.
   standalone ACPI device.
 - **Solution**: This is **expected behavior**. Speakers are accessible at `hw:1,1` through SOF.
 
-### 29. Loop device variable lost between operations
-
-- **Cause**: `$LOOPDEV` becomes stale after `losetup -d` or between sessions.
-- **Solution**: Re-create with `sudo losetup -Pf <image>` and recapture the variable.
-
 ---
 
 ## Audio Issues
@@ -100,7 +95,7 @@ on the Steam Deck OLED, with causes and solutions.
 - **Solution**: Comment out the `cset-tlv` line referencing `dsmparam.bin`:
 
   ```bash
-  sudo sed -i &#x27;/dsmparam/s/^/# /&#x27; /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi.conf
+  sudo sed -i '/dsmparam/s/^/# /' /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi.conf
   ```
 
 ### 13. `speaker-test` produces no sound through PipeWire
@@ -203,3 +198,8 @@ on the Steam Deck OLED, with causes and solutions.
 
 - **Cause**: Arch-specific package, not in Artix repos.
 - **Solution**: Not needed — Steam uses its own bundled runtime.
+
+### 29. Loop device variable lost between operations
+
+- **Cause**: `$LOOPDEV` becomes stale after `losetup -d` or between sessions.
+- **Solution**: Re-create with `sudo losetup -Pf <image>` and recapture the variable.

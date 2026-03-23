@@ -54,11 +54,11 @@ failure, and fix encountered during the process.
 
 ```bash
 # Clone this repository
-git clone https://github.com/youruser/artix-openrc-steamdeck-oled.git
-cd artix-openrc-steamdeck-oled
+git clone https://github.com/with0utt/artix-openrc-galileo.git
+cd artix-openrc-galileo
 
 # Follow the phases in order:
-# Phase 1: Build and install Valve&#x27;s Neptune kernel
+# Phase 1: Build and install Valve's Neptune kernel
 #   See docs/01-kernel-build.md or run:
 #   bash scripts/01-build-kernel.sh
 
