@@ -1,0 +1,28 @@
+#!/bin/bash
+# =============================================================================
+# steamos-session-select — Called by Steam for "Switch to Desktop" and by
+# the "Return to Game Mode" desktop entry.
+# Install to: /usr/bin/steamos-session-select
+# =============================================================================
+
+case "$1" in
+    plasma|desktop)
+        sudo /usr/bin/steamos-session-helper plasma
+        steam -shutdown
+        ;;
+    gamescope)
+        sudo /usr/bin/steamos-session-helper gamescope-session
+        # Try multiple KDE logout methods (Plasma 6 uses qdbus6)
+        qdbus6 org.kde.Shutdown /Shutdown logout 2>/dev/null ||
+        qdbus6 org.kde.ksmserver /KSMServer logout 0 0 0 2>/dev/null ||
+        qdbus org.kde.Shutdown /Shutdown logout 2>/dev/null ||
+        qdbus org.kde.ksmserver /KSMServer logout 0 0 0 2>/dev/null ||
+        dbus-send --session --type=method_call --dest=org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout int32:0 int32:0 int32:0 2>/dev/null ||
+        loginctl terminate-user deck 2>/dev/null ||
+        sudo rc-service sddm restart
+        ;;
+    *)
+        echo "Usage: steamos-session-select [plasma|desktop|gamescope]"
+        exit 1
+        ;;
+esac

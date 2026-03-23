@@ -1,0 +1,14 @@
+#!/bin/bash
+# =============================================================================
+# steamos-session-helper — Root-level helper that modifies SDDM config.
+# Install to: /usr/bin/steamos-session-helper
+# Called via passwordless sudo from steamos-session-select.
+# =============================================================================
+
+SESSION="$1"
+if [[ "$SESSION" == "plasma" || "$SESSION" == "gamescope-session" ]]; then
+    sed -i "s/^Session=.*/Session=$SESSION/" /etc/sddm.conf
+else
+    echo "Invalid session: $SESSION"
+    exit 1
+fi
