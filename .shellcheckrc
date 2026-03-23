@@ -1,0 +1,14 @@
+# Shellcheck configuration for Artix-OpenRC-Galileo
+# Used for linting all bash scripts in the scripts/ directory
+
+# Severity level: warning (catches issues without being too pedantic)
+severity=warning
+
+# Exclude specific checks that don't apply to this project
+# SC2181: Check exit code of the last command with an explicit $?
+exclude=SC2181
+
+# Enable optional checks
+enable=avoid-nullary-conditions
+enable=check-unassigned-uppercase
+enable=require-variable-braces
