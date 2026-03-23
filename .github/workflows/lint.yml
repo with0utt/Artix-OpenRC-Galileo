@@ -18,7 +18,7 @@ jobs:
         run: sudo apt-get install -y shellcheck
 
       - name: Run shellcheck on all scripts
-        run: shellcheck scripts/*.sh
+        run: shellcheck scripts/*.sh scripts/steamos-session-helper scripts/steamos-session-select configs/gamescope-session.sh
         continue-on-error: false
 
   markdownlint:
