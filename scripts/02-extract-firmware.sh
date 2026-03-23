@@ -26,6 +26,7 @@ sudo mount "${LOOPDEV}p3" "$MOUNTPOINT"
 
 # Verify OLED image
 echo "[2/8] Verifying OLED image..."
+# shellcheck disable=SC2012
 KERNEL_VER=$(ls "$MOUNTPOINT/lib/modules/" 2>/dev/null | head -1)
 echo "  Found kernel: $KERNEL_VER"
 if [[ "$KERNEL_VER" == 5.* ]]; then
