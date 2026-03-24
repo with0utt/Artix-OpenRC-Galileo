@@ -40,7 +40,7 @@ See `docs/known-limitations.md` for detailed limitations (e.g., some power manag
 
 ## 2. Repository Structure
 
-```
+```text
 Artix-OpenRC-Galileo/
 ├── README.md                 # Quick start and project overview
 ├── TROUBLESHOOTING.md        # 29 documented issues with solutions
@@ -496,7 +496,7 @@ Before committing, verify:
 
 Follow this format for clarity:
 
-```
+```text
 type(scope): description
 
 Type: docs | scripts | configs
@@ -567,4 +567,3 @@ If you're an AI assistant helping with this project and encounter something not 
 4. Ask for clarification from human contributors
 
 This guide is maintained to help you contribute effectively without breaking the installation flow for users.
-
