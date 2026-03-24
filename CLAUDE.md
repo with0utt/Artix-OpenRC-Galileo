@@ -28,7 +28,7 @@ Artix-OpenRC-Galileo is a comprehensive installation guide for running **Artix L
 
 **What doesn't work?**
 
-See `docs/known-limitations.md` for detailed limitations (e.g., some power management features, certain hardware integrations).
+See `docs/known-limitations.md` for the full list (TDP slider, fan control, Decky Loader, power button suspend, hardware volume buttons, etc.). Proposed but untested fixes for several of these live in `docs/experimental.md`.
 
 **Who is this for?**
 
@@ -43,8 +43,14 @@ See `docs/known-limitations.md` for detailed limitations (e.g., some power manag
 ```text
 Artix-OpenRC-Galileo/
 ├── README.md                 # Quick start and project overview
-├── TROUBLESHOOTING.md        # 29 documented issues with solutions
+├── TROUBLESHOOTING.md        # Documented issues with solutions
 ├── CLAUDE.md                 # This file - guide for AI assistants
+├── .markdownlint.json        # Markdownlint configuration (MD013, MD060 disabled)
+├── .shellcheckrc             # Shellcheck configuration (severity=warning)
+│
+├── .github/
+│   └── workflows/
+│       └── lint.yml          # CI: shellcheck + markdownlint + markdown-link-check
 │
 ├── docs/                     # Phase-by-phase installation guides
 │   ├── 01-kernel-build.md
@@ -56,6 +62,7 @@ Artix-OpenRC-Galileo/
 │   ├── 07-gamescope-session.md
 │   ├── 08-session-switching.md
 │   ├── 09-final-polish.md
+│   ├── experimental.md       # Untested/proposed fixes for known limitations
 │   └── known-limitations.md
 │
 ├── scripts/                  # Automated installation scripts (one per phase)
@@ -87,8 +94,10 @@ Artix-OpenRC-Galileo/
 **Key directories explained:**
 
 - **docs/** - Human-readable phase guides with detailed explanations, troubleshooting steps, and context
+- **docs/experimental.md** - Proposed but untested fixes for known limitations; clearly marked as unverified
 - **scripts/** - Automated shell scripts that implement each phase; correspond 1:1 with docs
 - **configs/** - Configuration file templates deployed by scripts; never manually edited by users
+- **.github/workflows/lint.yml** - CI pipeline that runs on PRs/pushes to main/master
 
 ---
 
@@ -292,6 +301,19 @@ Example: `git commit -m "docs: clarify audio configuration in phase 05-audio-pip
 4. Reference the relevant phase guide if applicable
 5. Commit: `git commit -m "docs: add troubleshooting for [issue]"`
 
+### Task: Add Experimental / Proposed Fix (Low Risk ✓)
+
+Use `docs/experimental.md` for fixes that are theoretically sound but have **not been verified
+on hardware**. This keeps unverified information separate from the main guide.
+
+1. Add a new section to `docs/experimental.md` with a clear heading
+2. Open with an explicit "Proposed fix" or "Proposed workaround" label
+3. State what is **Unknown** (i.e., what must be verified before promoting to main docs)
+4. If the fix relates to a known limitation, add a cross-reference in `docs/known-limitations.md`
+5. Commit: `git commit -m "docs: add experimental fix for [issue]"`
+
+**Do NOT** put unverified fixes in the main phase guides or `TROUBLESHOOTING.md`.
+
 ### Task: Modify Installation Script (High Risk ⚠️)
 
 1. **Read the full phase guide first** - Understand what problem you're solving
@@ -395,6 +417,8 @@ Only needed during Phase 1 (kernel build):
 - Clarify technical jargon in phase guides
 - Add timeline estimates for each phase
 - Expand explanations (help users understand WHY, not just follow steps)
+- Investigate and document proposed fixes in `docs/experimental.md` for known limitations
+  (TDP slider, fan control, power button behavior, hardware volume keys, Decky Loader)
 
 ### Script Improvement Tasks (if testable)
 
@@ -424,13 +448,42 @@ Only needed during Phase 1 (kernel build):
 
 ## 9. Testing & Validation
 
-**No automated testing exists.** All validation is manual and documentation-driven.
+### Automated CI (Phase 1 — Linting)
+
+A GitHub Actions workflow (`.github/workflows/lint.yml`) runs on every push to `main`/`master`
+and on all pull requests. It enforces three checks:
+
+| Check | Tool | What it covers |
+|-------|------|----------------|
+| Bash linting | `shellcheck` | All `scripts/*.sh`, `steamos-*` helpers, `configs/gamescope-session.sh` |
+| Markdown linting | `markdownlint-cli` | All `*.md` files |
+| Markdown link check | `markdown-link-check` | Links in `docs/*.md`, `README.md`, `TROUBLESHOOTING.md` |
+
+**Linting configuration:**
+
+- `.shellcheckrc` — severity set to `warning`; `SC2181` excluded; `avoid-nullary-conditions`
+  and `check-unassigned-uppercase` optional checks enabled
+- `.markdownlint.json` — `MD013` (line length) and `MD060` (fenced code blocks) disabled
+
+**Before pushing, run locally if possible:**
+
+```bash
+shellcheck scripts/*.sh scripts/steamos-session-helper scripts/steamos-session-select configs/gamescope-session.sh
+markdownlint '**/*.md'
+```
+
+CI failures will block merging. Fix linting errors before submitting PRs.
+
+### Manual Validation (Hardware)
+
+End-to-end functional testing requires **Steam Deck OLED hardware or a compatible VM**.
+There is no automated functional testing.
 
 ### For Documentation Changes
 
 - Read the updated guide carefully
 - Verify instructions are accurate and complete
-- Check links and references work
+- Check links and references work — the CI markdown-link-check will catch dead links
 - Verify formatting is correct (code blocks, emphasis, etc.)
 
 ### For Script Changes
@@ -460,6 +513,7 @@ Before committing, verify:
 - [ ] Commit message is clear and cites which phase
 - [ ] No unrelated changes bundled in commit
 - [ ] File has been reviewed for correctness
+- [ ] Shellcheck and markdownlint pass locally (or will pass in CI)
 
 ### If Script Changes Fail
 
@@ -537,8 +591,12 @@ Description: Clear, specific action taken
 | File/Directory | Risk | Can be modified safely? |
 |----------------|------|----------------------|
 | `docs/` | ✓ Low | Yes, improving clarity is encouraged |
+| `docs/experimental.md` | ✓ Low | Yes, add proposed fixes clearly marked as untested |
 | `TROUBLESHOOTING.md` | ✓ Low | Yes, add new entries freely |
 | `README.md` | ✓ Low | Yes, update project info |
+| `.markdownlint.json` | ✓ Low | Yes, adjust rules if needed |
+| `.shellcheckrc` | ✓ Low | Yes, adjust rules if needed |
+| `.github/workflows/lint.yml` | ⚠️ Medium | Changes affect CI for all PRs |
 | `scripts/01-08.sh` | ⚠️ High | Only if you fully understand the phase |
 | `configs/` | ⚠️ High | Only if you test end-to-end |
 | Script helpers (`steamos-*`) | ⚠️ High | Critical for session switching |
@@ -546,9 +604,13 @@ Description: Clear, specific action taken
 ### Common File Paths to Reference
 
 - Phase guides: `docs/NN-descriptive-name.md`
+- Experimental/proposed fixes: `docs/experimental.md`
+- Known limitations list: `docs/known-limitations.md`
 - Installation scripts: `scripts/NN-descriptive-name.sh`
 - Configs deployed: `configs/*.conf`, `configs/*.rules`, `configs/*.desktop`
 - System paths: `/etc/sddm.conf.d/`, `/etc/pipewire/`, `/etc/openrc/`
+- CI workflow: `.github/workflows/lint.yml`
+- Lint configs: `.markdownlint.json`, `.shellcheckrc`
 
 ### Key Git Branches
 
