@@ -126,7 +126,7 @@ curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/dow
 
 This installs to `~/homebrew/` (i.e. `/home/deck/homebrew/`). The backend binary ends up at:
 
-```
+```text
 /home/deck/homebrew/services/PluginLoader
 ```
 
