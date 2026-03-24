@@ -9,9 +9,9 @@ These are inherent limitations of running Artix/OpenRC instead of SteamOS:
   `plugin_loader.service` systemd unit which won't run on OpenRC. Plugins that call systemd
   D-Bus APIs will fail regardless of how Decky is launched. Untested workarounds exist —
   see [`docs/experimental.md`](experimental.md).
-- **TDP slider** in Game Mode is visible but has no effect. A fix involving `ryzenadj` from
-  AUR has been proposed but not confirmed to work in this setup — see
-  [`docs/experimental.md`](experimental.md).
+- **TDP slider** in Game Mode is visible but has no effect. Installing `ryzenadj` from AUR
+  alone does not fix it (hardware-confirmed). A sudoers rule is also required, and it is
+  still unknown whether that alone is sufficient — see [`docs/experimental.md`](experimental.md).
 - **Fan control** is not available. Valve's `jupiter-fan-control` daemon is closed-source
   and SteamOS-specific. The fan runs at BIOS defaults, which is safe but not optimized for
   noise or thermals. An experimental partial workaround exists — see

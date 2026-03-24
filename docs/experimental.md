@@ -16,16 +16,60 @@
 
 The QAM TDP slider is visible but has no effect.
 
-**Proposed fix**: Install `ryzenadj` from AUR. Gamescope/Steam is expected to detect it
-automatically and use it for APU power limit control.
+**Tested (hardware-confirmed)**: Installing `ryzenadj` from AUR alone is **not sufficient**.
+With `ryzenadj` installed and no other changes, the slider moves freely (3–15 W range is
+visible) but has no effect on actual APU power — the performance overlay still shows the
+GPU pinned at maximum wattage and thermals/frametimes are unchanged.
+
+**Root cause (likely)**: `ryzenadj` requires root privileges to write APU power limits.
+Steam cannot call it without a sudoers rule granting passwordless `sudo` access. On SteamOS,
+`/etc/sudoers.d/` includes exactly such a rule; this setup has none.
+
+**Proposed next step — add a sudoers rule**:
+
+Create `/etc/sudoers.d/ryzenadj`:
 
 ```bash
-paru -S ryzenadj
-# or: yay -S ryzenadj
+sudo visudo -f /etc/sudoers.d/ryzenadj
 ```
 
-**Unknown**: Whether Steam actually invokes `ryzenadj` correctly in this OpenRC setup, or
-whether additional configuration (e.g. sudoers rules for `ryzenadj`) is required.
+Add this line (replacing `deck` with your username if different):
+
+```text
+deck ALL=(root) NOPASSWD: /usr/bin/ryzenadj
+```
+
+Set correct permissions (required by sudo):
+
+```bash
+sudo chmod 440 /etc/sudoers.d/ryzenadj
+```
+
+**Verify ryzenadj itself works** before blaming Steam. Run this manually and check if
+actual power consumption changes:
+
+```bash
+# Set stapm/fast/slow limits to 10 W (values are in milliwatts)
+sudo ryzenadj --stapm-limit=10000 --fast-limit=10000 --slow-limit=10000
+
+# Confirm the change was applied
+sudo ryzenadj --info | grep -i limit
+```
+
+If `ryzenadj --info` shows the new limits, the binary and kernel interfaces are working.
+If not, there may be a kernel interface issue (check that the Neptune kernel exposes the
+required MMIO/MSR registers).
+
+**If the sudoers rule doesn't help**: Check Steam's output for TDP-related messages by
+launching Steam from a terminal (`steam 2>&1 | grep -i tdp`) while adjusting the slider.
+It's possible Steam uses a D-Bus call or helper script rather than calling `ryzenadj`
+directly — in that case a wrapper script in a location Steam checks may be needed.
+
+**Unknown**: Whether adding the sudoers rule is sufficient for Steam to invoke `ryzenadj`
+automatically, or whether Steam also requires a helper script or specific environment to
+detect and use it. Whether `ryzenadj` correctly addresses the OLED (Galileo) APU's power
+registers via the Neptune kernel has not been confirmed. This entire proposed fix still
+requires hardware testing.
 
 ---
 
