@@ -89,6 +89,7 @@ bash scripts/08-setup-brightness.sh
 | `scripts/` | Reusable shell scripts for each phase |
 | `configs/` | All configuration files referenced in the guide |
 | `TROUBLESHOOTING.md` | 29 known problems with causes and solutions |
+| `docs/experimental.md` | Untested fixes for broken features (TDP, volume keys, suspend, fan, Decky) |
 
 ## Phase Overview
 
