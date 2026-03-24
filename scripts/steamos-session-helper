@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # =============================================================================
 # steamos-session-helper — Root-level helper that modifies SDDM config.
 # Install to: /usr/bin/steamos-session-helper

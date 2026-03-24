@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # =============================================================================
 # steamos-session-select — Called by Steam for "Switch to Desktop" and by
 # the "Return to Game Mode" desktop entry.

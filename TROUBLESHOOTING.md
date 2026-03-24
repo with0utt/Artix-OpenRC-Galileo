@@ -25,7 +25,7 @@ on the Steam Deck OLED, with causes and solutions.
 - **Solution**:
 
   ```bash
-  find tools/ -name &quot;Makefile&quot; -exec sed -i &#x27;s/-Werror//g&#x27; {} +
+  find tools/ -name "Makefile" -exec sed -i 's/-Werror//g' {} +
   ```
 
 ### 4. `makepkg` wipes source modifications on rebuild
@@ -72,11 +72,6 @@ on the Steam Deck OLED, with causes and solutions.
   standalone ACPI device.
 - **Solution**: This is **expected behavior**. Speakers are accessible at `hw:1,1` through SOF.
 
-### 29. Loop device variable lost between operations
-
-- **Cause**: `$LOOPDEV` becomes stale after `losetup -d` or between sessions.
-- **Solution**: Re-create with `sudo losetup -Pf <image>` and recapture the variable.
-
 ---
 
 ## Audio Issues
@@ -100,7 +95,7 @@ on the Steam Deck OLED, with causes and solutions.
 - **Solution**: Comment out the `cset-tlv` line referencing `dsmparam.bin`:
 
   ```bash
-  sudo sed -i &#x27;/dsmparam/s/^/# /&#x27; /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi.conf
+  sudo sed -i '/dsmparam/s/^/# /' /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi.conf
   ```
 
 ### 13. `speaker-test` produces no sound through PipeWire
@@ -203,3 +198,104 @@ on the Steam Deck OLED, with causes and solutions.
 
 - **Cause**: Arch-specific package, not in Artix repos.
 - **Solution**: Not needed — Steam uses its own bundled runtime.
+
+### 29. Loop device variable lost between operations
+
+- **Cause**: `$LOOPDEV` becomes stale after `losetup -d` or between sessions.
+- **Solution**: Re-create with `sudo losetup -Pf <image>` and recapture the variable.
+
+---
+
+## Hardware Control Issues
+
+### 30. TDP slider does nothing in Game Mode
+
+- **Cause**: `ryzenadj` is not installed. The QAM TDP interface requires it to apply power
+  limits to the APU.
+- **Solution**: Install from AUR:
+
+  ```bash
+  paru -S ryzenadj
+  # or: yay -S ryzenadj
+  ```
+
+  No additional configuration is needed — Steam detects and uses `ryzenadj` automatically
+  once it is present on the system.
+
+### 31. Hardware volume buttons show overlay but don't change volume
+
+- **Cause**: In Game Mode, Steam handles volume key events through the PulseAudio
+  compatibility layer (`pipewire-pulse`). If `pipewire-pulse` is not running at session
+  start, or the `deck` user is not in the `audio` group, the mixer calls fail silently and
+  the overlay appears but the volume does not change.
+- **Solution**:
+  1. Confirm `deck` is in the `audio` group:
+
+     ```bash
+     groups deck   # should include "audio"
+     sudo usermod -aG audio deck
+     # Log out and back in for group change to take effect
+     ```
+
+  2. Confirm `pipewire-pulse.desktop` is in `~/.config/autostart/` (installed by Phase 5)
+     and that `pipewire-pulse` is actually running:
+
+     ```bash
+     pgrep -a pipewire-pulse
+     ```
+
+  3. In Desktop Mode, KDE handles volume keys natively via the PipeWire-PA bridge. If they
+     still don't work there, open **System Settings → Audio** and confirm the active output
+     device is the Filter Chain Sink, not HDMI.
+
+### 32. Power button immediately powers off instead of suspending
+
+- **Cause**: `elogind`'s default `HandlePowerKey=poweroff` triggers an immediate shutdown.
+  On systemd distros, `logind` maps the power key to suspend by default; elogind does not.
+- **Solution**:
+  1. Edit `/etc/elogind/logind.conf` and set:
+
+     ```ini
+     HandlePowerKey=suspend
+     ```
+
+  2. Restart elogind:
+
+     ```bash
+     sudo rc-service elogind restart
+     ```
+
+  The Neptune kernel handles s2idle (suspend-to-idle) correctly on the OLED. If the deck
+  does not resume after suspend, press the power button once — the first press wakes it and
+  the display may take a moment to come back. A second press will trigger another suspend.
+
+### 33. Fan runs at BIOS defaults / no fan curve control
+
+- **Cause**: SteamOS uses a closed-source `jupiter-fan-control` daemon to manage the fan
+  curve. That daemon is not available on Artix. The kernel exposes the fan via
+  `/sys/class/hwmon/` but without a userspace controller it runs at EC/BIOS defaults.
+- **Solution**: No complete solution exists. The BIOS fan curve is conservative and safe —
+  the deck will not overheat. For custom control, `nbfc-linux` (AUR) is a generic fan
+  controller that can drive the hwmon interface:
+
+  ```bash
+  paru -S nbfc-linux
+  ```
+
+  No verified Steam Deck OLED fan profile exists for `nbfc-linux`. Manual tuning via its
+  config format is required and results may vary. This is experimental.
+
+### 34. Decky Loader won't auto-start (no systemd)
+
+- **Cause**: Decky Loader's installer registers `plugin_loader.service` as a systemd unit
+  for automatic startup. That unit does not exist on OpenRC and Decky will not start.
+- **Solution**: Decky can be started manually after launching Steam in Game Mode:
+
+  ```bash
+  ~/.local/share/Steam/steamapps/common/Decky\ Loader/backend/backend &
+  ```
+
+  To make it persistent, wrap it in an OpenRC user service or add it to the
+  `gamescope-session.sh` startup script before the `exec steam ...` line. Note that Decky
+  plugins which call systemd D-Bus APIs (e.g. some power management plugins) will still
+  fail regardless — this is an upstream limitation and unsupported configuration.

@@ -1,7 +1,7 @@
 # Phase 1: Kernel Build (Most Critical Step)
 
 The stock Artix kernel lacks support for the Steam Deck OLED's **Wi-Fi chip (QCA2066)**,
-**audio codecs (CS35L41 speakers, NAU88L21 headphones)**, and **OLED panel**. Valve's
+**audio codecs (CS35L41 speakers, NAU8821 headphones)**, and **OLED panel**. Valve's
 Neptune kernel is required.
 
 ## Why a Custom Kernel?
@@ -37,7 +37,7 @@ strip `-Werror` from the tool Makefiles:
 
 ```bash
 cd src/archlinux-linux-neptune
-find tools/ -name &quot;Makefile&quot; -exec sed -i &#x27;s/-Werror//g&#x27; {} +
+find tools/ -name "Makefile" -exec sed -i 's/-Werror//g' {} +
 ```
 
 ### 4. Fix Version String Issues
@@ -48,7 +48,7 @@ fix is to remove `.git` entirely:
 ```bash
 rm -rf .git
 rm -f include/config/kernel.release
-make -s kernelrelease &gt; version
+make -s kernelrelease > version
 ```
 
 ### 5. Build the Kernel

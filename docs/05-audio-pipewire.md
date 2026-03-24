@@ -16,8 +16,8 @@ sudo pacman -Rdd pulseaudio pulseaudio-bluetooth pulseaudio-zeroconf jack2
 ```bash
 sudo pacman -S pipewire pipewire-pulse pipewire-alsa pipewire-jack wireplumber \
     lilv lv2 alsa-utils alsa-firmware sof-firmware rtkit brightnessctl \
-    --overwrite &#x27;/usr/share/pipewire/*&#x27; \
-    --overwrite &#x27;/usr/share/alsa/alsa.conf.d/*&#x27;
+    --overwrite '/usr/share/pipewire/*' \
+    --overwrite '/usr/share/alsa/alsa.conf.d/*'
 ```
 
 The `--overwrite` flags resolve file conflicts from earlier SteamOS firmware copies.
@@ -39,7 +39,7 @@ sudo ln -sf /usr/share/pipewire/hardware-profiles/valve-galileo/pipewire.conf.d/
 ```bash
 sudo mkdir -p /usr/share/wireplumber/wireplumber.conf.d
 for f in /usr/share/wireplumber/hardware-profiles/valve-galileo/wireplumber.conf.d/*.conf; do
-    sudo ln -sf &quot;$f&quot; /usr/share/wireplumber/wireplumber.conf.d/$(basename &quot;$f&quot;)
+    sudo ln -sf "$f" /usr/share/wireplumber/wireplumber.conf.d/$(basename "$f")
 done
 ```
 
@@ -48,7 +48,7 @@ done
 The UCM profile references `/etc/dsmparam.bin` (factory calibration) which doesn't exist:
 
 ```bash
-sudo sed -i &#x27;/dsmparam/s/^/# /&#x27; /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi.conf
+sudo sed -i '/dsmparam/s/^/# /' /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi.conf
 ```
 
 ### 6. Set Up PipeWire Autostart for KDE (OpenRC)
@@ -72,7 +72,7 @@ After PipeWire is running, the default sink may be HDMI instead of speakers:
 wpctl status
 
 # Set the Filter Chain Sink as default (ID may vary)
-wpctl set-default &lt;FILTER_CHAIN_SINK_ID&gt;
+wpctl set-default <FILTER_CHAIN_SINK_ID>
 ```
 
 ## Key Warnings
