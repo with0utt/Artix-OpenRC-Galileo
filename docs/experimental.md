@@ -113,26 +113,99 @@ to run slower than safe. Proceed carefully.
 ## Decky Loader Without systemd
 
 Decky Loader's installer registers `plugin_loader.service` as a systemd unit. That unit
-cannot run on OpenRC, so Decky does not start after installation.
+cannot run on OpenRC, so Decky does not start after installation. There is no official OpenRC
+support and no community-maintained OpenRC service file exists upstream.
+
+**Step 1 — Install Decky Loader normally**:
+
+Run the official installer from a Desktop Mode terminal:
+
+```bash
+curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/install_release.sh | sh
+```
+
+This installs to `~/homebrew/` (i.e. `/home/deck/homebrew/`). The backend binary ends up at:
+
+```
+/home/deck/homebrew/services/PluginLoader
+```
+
+The systemd service it registers (`plugin_loader.service`) will be silently ignored on OpenRC.
 
 **Proposed workaround — manual launch**:
 
-After Steam is running in Game Mode, start the backend manually:
+After Steam is running in Game Mode, open a terminal and start the backend manually:
 
 ```bash
-~/.local/share/Steam/steamapps/common/Decky\ Loader/backend/backend &
+/home/deck/homebrew/services/PluginLoader &
 ```
+
+Decky's UI overlay should appear in Steam's QAM after a moment.
 
 **Proposed workaround — persistent launch via session script**:
 
-Add the line above to `configs/gamescope-session.sh` before the `exec steam ...` line, then
-redeploy with `scripts/07-setup-sessions.sh`. This starts the Decky backend alongside Steam
-every session.
+To start the backend automatically every Game Mode session, add it to
+`configs/gamescope-session.sh` before the `exec steam ...` line:
+
+```bash
+/home/deck/homebrew/services/PluginLoader &
+```
+
+Then redeploy the session config by re-running `scripts/07-setup-sessions.sh`. The Decky
+backend will start alongside Steam on every Game Mode launch.
 
 **Hard limitation regardless of workaround**: Decky plugins that call systemd D-Bus APIs
 will fail regardless of how the backend is started. This includes many power management and
 system control plugins. There is no workaround for this short of implementing the missing
 D-Bus interfaces in elogind (which is upstream work).
 
-**Unknown**: Which specific plugins work and which don't in this OpenRC setup. This has not
-been tested at all.
+**Unknown**: Which specific plugins work and which don't in this OpenRC setup. Whether the
+PluginLoader binary starts cleanly without the full SteamOS environment (correct user, cgroup
+layout, etc.) is also unconfirmed. This has not been tested at all.
+
+---
+
+## DeckSP Plugin (Audio DSP via Decky)
+
+DeckSP is a Decky Loader plugin that adds a 7-category audio DSP chain to Game Mode: a
+15-band EQ, limiting, compression/expansion, stereo widening, crossfeed, reverb, bass
+enhancement, and analog harmonic modelling. It is a frontend for JamesDSP.
+
+**Prerequisite**: The Decky Loader workaround above must be working first. DeckSP is a Decky
+plugin and cannot run independently.
+
+**How DeckSP manages JamesDSP**:
+
+DeckSP automatically installs and manages the JamesDSP **Flatpak**
+(`com.github.Audio4Linux.JDSP4Linux` from Flathub). It does not detect a native install.
+For DeckSP's auto-install to work, Flatpak must be present and Flathub must be configured:
+
+```bash
+sudo pacman -S flatpak
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+```
+
+After that, install DeckSP through Decky's plugin store in Game Mode. DeckSP will pull and
+launch the JamesDSP Flatpak itself.
+
+**Alternative — native JamesDSP from AUR (no Flatpak)**:
+
+A PipeWire-native AUR package exists and runs directly on Artix/OpenRC without a Flatpak
+sandbox:
+
+```bash
+paru -S jamesdsp
+# or: paru -S jamesdsp-pipewire-bin  (pre-compiled binary)
+```
+
+JamesDSP exposes a D-Bus service on the session bus
+(`me.timschneeberger.jdsp4linux.Service`) that does not require systemd activation, so it
+may register correctly inside a gamescope session on OpenRC. However, DeckSP is hardcoded to
+manage the Flatpak version; it will not detect a native AUR install without modifying the
+plugin's Python backend.
+
+**Unknown**: Whether DeckSP's Flatpak auto-install succeeds when Flatpak is present but
+systemd session portals (`xdg-desktop-portal`) are not running. Whether the native
+`jamesdsp` D-Bus service registers and remains discoverable within the gamescope session.
+Whether DeckSP's plugin backend can be patched to talk to a native install instead of the
+Flatpak. None of this has been tested on this OpenRC setup.
