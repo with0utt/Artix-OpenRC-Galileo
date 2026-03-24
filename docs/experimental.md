@@ -165,6 +165,64 @@ layout, etc.) is also unconfirmed. This has not been tested at all.
 
 ---
 
+## Steam Virtual Keyboard Too Large in Desktop Mode
+
+The Steam OSK cuts off at the right edge of the screen (around the P key). The OSK is
+designed for 1280 px width; if KDE's global scale is above 1.0×, the rendered width
+exceeds the physical screen resolution.
+
+**Proposed fix — reduce KDE global scale**:
+
+Open System Settings → Display & Monitor → Global Scale and set it to 100%.
+Log out and back in for the change to take effect.
+
+**Proposed fix — force Steam UI scaling via environment variable**:
+
+Edit `~/.config/autostart/steam.desktop` and change the `Exec` line to:
+
+```ini
+Exec=env STEAM_FORCE_DESKTOPUI_SCALING=0.8 steam -silent
+```
+
+Adjust the value between 0.8 and 1.0 until the keyboard fits without being cut off.
+
+**Unknown**: Which fix is needed depends on what KDE global scale is configured to on
+your install. Both approaches are untested here. The environment variable approach is
+preferable if you want to keep system scaling above 100% for readability.
+
+---
+
+## KDE "Control Input Devices" Popup When Steam Opens
+
+Steam requests `kglobalaccel` and/or `uinput` access in desktop mode to register the
+Steam+X shortcut and drive the virtual keyboard. KDE prompts for authorization while the
+dialog is up, trackpad input is suspended until the button is physically tapped.
+
+The udev rule deployed in Phase 9 (`configs/99-input.rules`) addresses raw `/dev/uinput`
+access. If the popup persists after that, it is from KDE's kglobalaccel policy. A polkit
+rule can pre-authorize it without requiring a tap each time.
+
+**Proposed fix — polkit rule**:
+
+Create `/etc/polkit-1/rules.d/50-steam-input.rules` with the following content:
+
+```javascript
+polkit.addRule(function(action, subject) {
+    if (subject.user === "deck" &&
+        action.id.indexOf("org.kde.kglobalaccel") === 0) {
+        return polkit.Result.YES;
+    }
+});
+```
+
+**Unknown**: The exact polkit action ID has not been confirmed from system logs.
+To find the real ID, run `sudo journalctl -f` while Steam starts in desktop mode and
+search the output for lines containing `polkit`. Adjust the `action.id` prefix in the
+rule to match. The `org.kde.kglobalaccel` prefix above is the most likely candidate
+but has not been verified against actual log output.
+
+---
+
 ## DeckSP Plugin (Audio DSP via Decky)
 
 DeckSP is a Decky Loader plugin that adds a 7-category audio DSP chain to Game Mode: a
