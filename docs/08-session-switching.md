@@ -45,6 +45,17 @@ cp configs/return-to-gamemode.desktop ~/.local/share/applications/
   which calls `steamos-session-select gamescope`. The script updates `sddm.conf` and
   logs out of KDE (with multiple fallback methods for Plasma 6 compatibility).
 
+## Steam in Desktop Mode
+
+When switching from Game Mode to Desktop, `steamos-session-select` shuts Steam down
+before SDDM relaunches KDE. Without Steam running, the Steam+X virtual keyboard shortcut
+is unavailable in desktop mode.
+
+`scripts/07-setup-sessions.sh` installs an XDG autostart entry
+(`configs/autostart/steam.desktop`) that re-launches Steam silently (`steam -silent`)
+when KDE starts. Steam runs in the system tray without opening the main window, and the
+Steam+X shortcut becomes available immediately.
+
 ## Key Warnings
 
 - KDE Plasma 6 uses `qdbus6`, not `qdbus`. The session select script includes fallbacks

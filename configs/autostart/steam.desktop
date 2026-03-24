@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Steam
+Exec=steam -silent
+Type=Application
+NoDisplay=true

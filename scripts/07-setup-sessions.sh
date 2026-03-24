@@ -35,9 +35,14 @@ sudo cp "$SCRIPT_DIR/configs/steam-session.sudoers" /etc/sudoers.d/steam-session
 sudo chmod 440 /etc/sudoers.d/steam-session
 
 # Return to Game Mode desktop entry
-echo "[6/6] Creating 'Return to Game Mode' menu entry..."
+echo "[6/7] Creating 'Return to Game Mode' menu entry..."
 mkdir -p ~/.local/share/applications
 cp "$SCRIPT_DIR/configs/return-to-gamemode.desktop" ~/.local/share/applications/
+
+# Steam autostart for desktop mode
+echo "[7/7] Installing Steam autostart for desktop mode..."
+mkdir -p ~/.config/autostart
+cp "$SCRIPT_DIR/configs/autostart/steam.desktop" ~/.config/autostart/steam.desktop
 
 echo ""
 echo "=== Session setup complete! ==="
