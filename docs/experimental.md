@@ -119,11 +119,15 @@ change to PipeWire. On SteamOS, Valve's fork of Gamescope likely handles this in
 (either by calling `libpulse` directly or by delegating to `steamos-manager`). Upstream
 Gamescope does not include this volume-change logic — only the overlay rendering.
 
-### Fix — `acpid` volume key handler (hardware-confirmed approach)
+### Fix — `acpid` volume key handler (hardware-confirmed working)
 
 The hardware volume buttons generate ACPI events (`button/volumeup` and `button/volumedown`)
 that `acpid` can catch independently of Gamescope's input handling. The `wpctl` volume
 command works correctly from a root context via `su - deck` (hardware-confirmed).
+
+**Hardware-confirmed results**: Volume changes correctly in Game Mode, overlay stays in
+sync. In Desktop Mode, KDE also handles volume keys natively, so the handler scripts
+include a guard to skip when KDE is active (prevents double-action).
 
 ```bash
 # 1. Install acpid and enable on boot
@@ -136,12 +140,16 @@ sudo mkdir -p /etc/acpi
 
 sudo tee /etc/acpi/vol-up.sh > /dev/null << 'SCRIPT'
 #!/bin/bash
+# Skip if KDE/Desktop session is active (KDE handles volume keys natively)
+pgrep -x plasmashell > /dev/null && exit 0
 # Run as the deck user so PipeWire session is reachable
 su - deck -c 'XDG_RUNTIME_DIR=/run/user/$(id -u deck) wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+'
 SCRIPT
 
 sudo tee /etc/acpi/vol-down.sh > /dev/null << 'SCRIPT'
 #!/bin/bash
+# Skip if KDE/Desktop session is active (KDE handles volume keys natively)
+pgrep -x plasmashell > /dev/null && exit 0
 su - deck -c 'XDG_RUNTIME_DIR=/run/user/$(id -u deck) wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-'
 SCRIPT
 
@@ -162,22 +170,15 @@ RULE
 sudo rc-service acpid restart
 ```
 
-### What still needs hardware testing
+### Hardware test results
 
-1. **Confirm volume actually changes in Game Mode** when pressing the hardware buttons
-   after setting up acpid — the actual audio level should now change alongside the
-   overlay.
-2. **Check for double-action in Desktop Mode** — KDE already handles volume keys natively.
-   With acpid also running, each button press might change volume twice (once via KDE,
-   once via acpid). If so, add a check to the handler scripts to skip when KDE is the
-   active session:
+- **Game Mode**: Volume changes correctly with hardware buttons. Overlay stays in sync. ✅
+- **Desktop Mode (KDE)**: Without the `plasmashell` guard, volume changes by 10% per press
+  (double-action: KDE + acpid both fire). With the guard added, volume changes by 5% as
+  expected. ✅
+- **Overlay sync**: Gamescope's volume overlay reflects the acpid-driven change. ✅
 
-   ```bash
-   # Skip if KDE/Desktop session is active (KDE handles volume keys natively)
-   pgrep -x plasmashell > /dev/null && exit 0
-   ```
-3. **Check overlay sync** — whether Gamescope's overlay reflects the acpid-driven volume
-   change, or shows a stale value.
+**Status**: This fix is fully working. Ready to be promoted to the main guide.
 
 ---
 
