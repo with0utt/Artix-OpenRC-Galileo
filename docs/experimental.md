@@ -91,32 +91,81 @@ The physical volume up/down buttons bring up the volume HUD but the level doesn'
 The QAM volume slider works fine. This suggests the input event is received but the mixer
 call fails.
 
-**Proposed diagnosis**:
+### What has been tested (hardware-confirmed)
 
-1. Confirm `deck` is in the `audio` group:
+1. **`deck` is in the `audio` group** — confirmed, not the issue.
+2. **`pipewire-pulse` is running in Game Mode** — confirmed, not the issue.
+3. **The volume overlay shows the correct sink** (Filter Chain Sink) — the input event
+   reaches Steam and Steam knows the right output device.
+4. **The QAM volume slider works** — PipeWire volume control itself is functional.
+
+The basic diagnosis steps (group membership, autostart, sink selection) have all been
+ruled out. The problem is specific to how Steam handles the hardware volume key events
+vs. how it handles the QAM slider internally.
+
+### Root cause hypothesis
+
+Steam's volume key handler and QAM slider likely use different code paths. The QAM slider
+probably calls PipeWire/PulseAudio APIs directly (via `libpulse`), while the hardware
+volume keys may go through a different mechanism — possibly ALSA mixer, `XF86Audio*`
+keysym handling, or a Gamescope-internal volume path that expects a specific mixer element
+or D-Bus service.
+
+### Next diagnostic steps (needs hardware testing)
+
+1. **Check if CLI volume control works** — confirm PipeWire volume changes are possible
+   from the session context Steam runs in:
 
    ```bash
-   groups deck   # should include "audio"
-   sudo usermod -aG audio deck
-   # Log out and back in for group change to take effect
+   # From a TTY while in Game Mode:
+   wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
+   wpctl get-volume @DEFAULT_AUDIO_SINK@
    ```
 
-2. Confirm `pipewire-pulse` is actually running when in Game Mode (Steam depends on it for
-   volume key handling):
+   If this works, the issue is in how Steam sends the volume change, not PipeWire itself.
+
+2. **Watch for PipeWire/PulseAudio volume events** — run this while pressing the hardware
+   volume buttons to see if any volume change attempt reaches PipeWire:
 
    ```bash
-   pgrep -a pipewire-pulse
+   # Option A: watch PulseAudio events (Steam uses libpulse)
+   pactl subscribe 2>&1 | grep -i volume
+
+   # Option B: watch PipeWire events
+   pw-cli dump short 2>&1 | grep -i vol
    ```
 
-   If it's not running, check that `pipewire-pulse.desktop` exists in `~/.config/autostart/`
-   (installed by Phase 5).
+   If nothing appears, Steam is not sending any volume command — the overlay is purely
+   cosmetic and the key handler is broken.
 
-3. In Desktop Mode, KDE handles volume keys natively via the PipeWire-PA bridge. If they
-   still don't work there, check **System Settings → Audio** and confirm the active output
-   device is the Filter Chain Sink, not HDMI.
+3. **Check what key events Gamescope sees** — Gamescope intercepts input in embedded mode.
+   It may be swallowing the volume key and showing the overlay without forwarding a volume
+   change to PipeWire:
 
-**Unknown**: Whether this is purely a group/autostart issue or whether there's a deeper
-problem with how Steam's volume key handler interacts with PipeWire-pulse on OpenRC.
+   ```bash
+   # Check Gamescope's log output for volume key references
+   journalctl --user -u gamescope* 2>/dev/null || dmesg | grep -i gamescope
+   ```
+
+4. **Check if volume keys work in Desktop Mode** — if they work under KDE but not Game
+   Mode, the issue is Gamescope-specific. If they fail in both, it's a PipeWire/ALSA
+   mixer mapping issue.
+
+5. **Inspect ALSA mixer elements** — Steam may be trying to change an ALSA mixer control
+   that doesn't exist or is named differently under the filter chain:
+
+   ```bash
+   amixer -c 0 scontrols
+   amixer -c 1 scontrols
+   ```
+
+   Compare the available controls with what a stock SteamOS exposes.
+
+**Unknown**: Which code path Steam uses for hardware volume keys in Game Mode — whether
+it's Gamescope forwarding `XF86AudioRaiseVolume`/`XF86AudioLowerVolume` to a handler, a
+direct ALSA mixer write, or a PulseAudio API call. Whether Gamescope itself is supposed
+to handle volume changes in embedded mode on SteamOS (in which case the issue is a
+missing Gamescope patch or config), or whether Steam handles it directly.
 
 ---
 
