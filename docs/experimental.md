@@ -103,69 +103,105 @@ The basic diagnosis steps (group membership, autostart, sink selection) have all
 ruled out. The problem is specific to how Steam handles the hardware volume key events
 vs. how it handles the QAM slider internally.
 
-### Root cause hypothesis
+### Root cause (hardware-confirmed)
 
-Steam's volume key handler and QAM slider likely use different code paths. The QAM slider
-probably calls PipeWire/PulseAudio APIs directly (via `libpulse`), while the hardware
-volume keys may go through a different mechanism — possibly ALSA mixer, `XF86Audio*`
-keysym handling, or a Gamescope-internal volume path that expects a specific mixer element
-or D-Bus service.
+**The issue is Gamescope-specific, not PipeWire.**
 
-### Next diagnostic steps (needs hardware testing)
+- **`pactl subscribe` shows no volume events** when pressing hardware volume buttons in
+  Game Mode — no volume change command reaches PipeWire at all. The overlay is purely
+  cosmetic.
+- **Volume keys work correctly in Desktop Mode (KDE)** — KDE's Plasma PA applet handles
+  `XF86AudioRaiseVolume`/`XF86AudioLowerVolume` keysyms and calls PipeWire-pulse directly.
 
-1. **Check if CLI volume control works** — confirm PipeWire volume changes are possible
-   from the session context Steam runs in:
+In embedded (DRM) mode, Gamescope intercepts all input. When it sees a volume key, it
+renders the volume overlay inside the compositor, but it does **not** forward a volume
+change to PipeWire. On SteamOS, Valve's fork of Gamescope likely handles this internally
+(either by calling `libpulse` directly or by delegating to `steamos-manager`). Upstream
+Gamescope does not include this volume-change logic — only the overlay rendering.
 
-   ```bash
-   # From a TTY while in Game Mode:
-   wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
-   wpctl get-volume @DEFAULT_AUDIO_SINK@
-   ```
+### Proposed fix — intercept volume keys externally
 
-   If this works, the issue is in how Steam sends the volume change, not PipeWire itself.
+Since Gamescope shows the overlay but doesn't change volume, a helper process running
+alongside the gamescope session can listen for the key events and apply the volume change.
 
-2. **Watch for PipeWire/PulseAudio volume events** — run this while pressing the hardware
-   volume buttons to see if any volume change attempt reaches PipeWire:
+**Option A — `acpid` volume key handler**:
 
-   ```bash
-   # Option A: watch PulseAudio events (Steam uses libpulse)
-   pactl subscribe 2>&1 | grep -i volume
+The hardware volume buttons generate ACPI events that `acpid` can catch independently of
+Gamescope's input handling:
 
-   # Option B: watch PipeWire events
-   pw-cli dump short 2>&1 | grep -i vol
-   ```
+```bash
+# 1. Install acpid
+sudo pacman -S --needed --noconfirm acpid
+sudo rc-update add acpid default
+sudo rc-service acpid start
 
-   If nothing appears, Steam is not sending any volume command — the overlay is purely
-   cosmetic and the key handler is broken.
+# 2. Create handler scripts
+sudo mkdir -p /etc/acpi
 
-3. **Check what key events Gamescope sees** — Gamescope intercepts input in embedded mode.
-   It may be swallowing the volume key and showing the overlay without forwarding a volume
-   change to PipeWire:
+sudo tee /etc/acpi/vol-up.sh > /dev/null << 'SCRIPT'
+#!/bin/bash
+# Run as the deck user so PipeWire session is reachable
+su - deck -c 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+'
+SCRIPT
 
-   ```bash
-   # Check Gamescope's log output for volume key references
-   journalctl --user -u gamescope* 2>/dev/null || dmesg | grep -i gamescope
-   ```
+sudo tee /etc/acpi/vol-down.sh > /dev/null << 'SCRIPT'
+#!/bin/bash
+su - deck -c 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-'
+SCRIPT
 
-4. **Check if volume keys work in Desktop Mode** — if they work under KDE but not Game
-   Mode, the issue is Gamescope-specific. If they fail in both, it's a PipeWire/ALSA
-   mixer mapping issue.
+sudo chmod +x /etc/acpi/vol-up.sh /etc/acpi/vol-down.sh
 
-5. **Inspect ALSA mixer elements** — Steam may be trying to change an ALSA mixer control
-   that doesn't exist or is named differently under the filter chain:
+# 3. Create ACPI event rules
+sudo tee /etc/acpi/events/vol-up > /dev/null << 'RULE'
+event=button/volumeup
+action=/etc/acpi/vol-up.sh
+RULE
 
-   ```bash
-   amixer -c 0 scontrols
-   amixer -c 1 scontrols
-   ```
+sudo tee /etc/acpi/events/vol-down > /dev/null << 'RULE'
+event=button/volumedown
+action=/etc/acpi/vol-down.sh
+RULE
 
-   Compare the available controls with what a stock SteamOS exposes.
+# 4. Restart acpid to load rules
+sudo rc-service acpid restart
+```
 
-**Unknown**: Which code path Steam uses for hardware volume keys in Game Mode — whether
-it's Gamescope forwarding `XF86AudioRaiseVolume`/`XF86AudioLowerVolume` to a handler, a
-direct ALSA mixer write, or a PulseAudio API call. Whether Gamescope itself is supposed
-to handle volume changes in embedded mode on SteamOS (in which case the issue is a
-missing Gamescope patch or config), or whether Steam handles it directly.
+**Option B — `triggerhappy` or `evtest`-based listener**:
+
+If the volume buttons don't generate ACPI events (they may be pure HID input), use
+`triggerhappy` to bind the key codes to `wpctl` commands:
+
+```bash
+sudo pacman -S --needed --noconfirm triggerhappy
+
+# Find the key codes
+sudo evtest  # press volume up/down buttons, note the KEY_VOLUMEUP / KEY_VOLUMEDOWN codes
+
+# Create a trigger config
+sudo tee /etc/triggerhappy/triggers.d/volume.conf > /dev/null << 'CONF'
+KEY_VOLUMEUP    1  su - deck -c 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+'
+KEY_VOLUMEDOWN  1  su - deck -c 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-'
+CONF
+
+sudo rc-service triggerhappy restart
+```
+
+### What still needs hardware testing
+
+1. **Determine whether the buttons generate ACPI events or HID key events** — run
+   `acpi_listen` and `evtest` while pressing the volume buttons to determine which
+   listener approach (Option A or B) is correct.
+2. **Test whether `wpctl` works via `su - deck`** from a root context — the PipeWire
+   session socket must be reachable. If `su` doesn't work, try setting
+   `XDG_RUNTIME_DIR=/run/user/$(id -u deck)` explicitly.
+3. **Check for double-action** — if Gamescope's overlay already reflects the external
+   volume change, this may work seamlessly. If the overlay shows the old value while the
+   actual volume changes, it's functional but visually mismatched.
+
+**Unknown**: Whether Gamescope exclusively grabs the input device (preventing acpid /
+triggerhappy from seeing the events), or whether both can receive them. If Gamescope has
+an exclusive grab, the only fix would be patching the gamescope session script to run a
+volume helper that reads from Gamescope's own input forwarding.
 
 ---
 
