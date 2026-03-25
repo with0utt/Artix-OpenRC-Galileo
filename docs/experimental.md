@@ -91,7 +91,7 @@ The physical volume up/down buttons bring up the volume HUD but the level doesn'
 The QAM volume slider works fine. This suggests the input event is received but the mixer
 call fails.
 
-### What has been tested (hardware-confirmed)
+### Initial diagnosis (hardware-confirmed)
 
 1. **`deck` is in the `audio` group** — confirmed, not the issue.
 2. **`pipewire-pulse` is running in Game Mode** — confirmed, not the issue.
@@ -103,7 +103,7 @@ The basic diagnosis steps (group membership, autostart, sink selection) have all
 ruled out. The problem is specific to how Steam handles the hardware volume key events
 vs. how it handles the QAM slider internally.
 
-### Root cause (hardware-confirmed)
+### Root cause — Gamescope swallows volume keys (hardware-confirmed)
 
 **The issue is Gamescope-specific, not PipeWire.**
 
