@@ -1,6 +1,7 @@
 # Experimental / Untested Fixes
 
-> ⚠️ **Nothing in this document has been tested on actual hardware.**
+> ⚠️ **Most items in this document have NOT been tested on actual hardware** unless
+> explicitly marked as "hardware-confirmed".
 >
 > These are proposed fixes and workarounds based on how these components work on systemd
 > distros or general Linux — not on this specific Artix OpenRC setup. They may work, may
@@ -16,60 +17,71 @@
 
 The QAM TDP slider is visible but has no effect.
 
-**Tested (hardware-confirmed)**: Installing `ryzenadj` from AUR alone is **not sufficient**.
-With `ryzenadj` installed and no other changes, the slider moves freely (3–15 W range is
-visible) but has no effect on actual APU power — the performance overlay still shows the
-GPU pinned at maximum wattage and thermals/frametimes are unchanged.
+### What has been tested (hardware-confirmed)
 
-**Root cause (likely)**: `ryzenadj` requires root privileges to write APU power limits.
-Steam cannot call it without a sudoers rule granting passwordless `sudo` access. On SteamOS,
-`/etc/sudoers.d/` includes exactly such a rule; this setup has none.
+1. **`ryzenadj` does NOT work** — the Neptune kernel does not include the `ryzen_smu` module.
+   `ryzenadj` falls back to `/dev/mem` with no way to verify writes actually land, and the
+   APU is not fully recognised (`request_table_ver_and_size is not supported on this family`).
+   `/sys/class/powercap/` does not exist on this hardware. **Do not use `ryzenadj`.**
 
-**Proposed next step — add a sudoers rule**:
+2. **hwmon `power1_cap` DOES work** — the `amdgpu` driver exposes a writable `power1_cap`
+   sysfs entry. Writing to it correctly caps APU power (confirmed via performance overlay):
 
-Create `/etc/sudoers.d/ryzenadj`:
+   ```bash
+   # Find the amdgpu hwmon device (number can change across reboots)
+   HWMON=$(for d in /sys/class/hwmon/hwmon*/; do
+       grep -q amdgpu "$d/name" 2>/dev/null && echo "$d" && break
+   done)
+
+   # Set 8 W cap (values are in microwatts: W × 1,000,000)
+   echo 8000000 | sudo tee "${HWMON}power1_cap"
+   ```
+
+3. **The QAM slider still doesn't work** because Steam does not call `ryzenadj` or write to
+   sysfs directly. Steam calls methods on a D-Bus service called
+   `com.steampowered.SteamOSManager1` — Valve's privileged `steamos-manager` daemon, which
+   does not exist on Artix.
+
+### Root cause
+
+Steam's TDP slider sends D-Bus calls to `com.steampowered.SteamOSManager1`. On SteamOS,
+this service (`steamos-manager`) translates those calls into EC firmware writes. On Artix
+OpenRC, the service is completely absent — Steam gets a D-Bus error and fails silently.
+No polkit actions are registered either (`pkaction --verbose` shows nothing Steam/Jupiter
+related). `dbus-monitor` shows zero bus activity when the slider is moved, confirming the
+call never reaches the bus.
+
+### Proposed fix — implement a minimal D-Bus stub service
+
+A small D-Bus service that:
+
+1. Registers as `com.steampowered.SteamOSManager1` on the system bus
+2. Implements the TDP-related method(s) that Steam calls
+3. Translates those calls into sysfs writes to `power1_cap` (confirmed working above)
+4. Runs as an OpenRC service on boot
+
+### What still needs hardware testing
+
+Before building the stub, the exact D-Bus method signatures must be captured. Try these
+on hardware while moving the TDP slider in Game Mode:
 
 ```bash
-sudo visudo -f /etc/sudoers.d/ryzenadj
+# Option 1: busctl monitor (may capture the failed call attempt)
+sudo busctl monitor com.steampowered.SteamOSManager1
+
+# Option 2: strace Steam to see the raw D-Bus message
+strace -f -e trace=write -p $(pgrep -f "steam.sh" | head -1) 2>&1 | grep -i steamos
 ```
 
-Add this line (replacing `deck` with your username if different):
+Alternatively, check Valve's open-source `steamos-manager` repository on their GitLab for
+the D-Bus interface definition — that will document the exact method names, signatures, and
+expected behavior without needing to reverse-engineer from Steam's calls.
 
-```text
-deck ALL=(root) NOPASSWD: /usr/bin/ryzenadj
-```
-
-Set correct permissions (required by sudo):
-
-```bash
-sudo chmod 440 /etc/sudoers.d/ryzenadj
-```
-
-**Verify ryzenadj itself works** before blaming Steam. Run this manually and check if
-actual power consumption changes:
-
-```bash
-# Set stapm/fast/slow limits to 10 W (values are in milliwatts)
-sudo ryzenadj --stapm-limit=10000 --fast-limit=10000 --slow-limit=10000
-
-# Confirm the change was applied
-sudo ryzenadj --info | grep -i limit
-```
-
-If `ryzenadj --info` shows the new limits, the binary and kernel interfaces are working.
-If not, there may be a kernel interface issue (check that the Neptune kernel exposes the
-required MMIO/MSR registers).
-
-**If the sudoers rule doesn't help**: Check Steam's output for TDP-related messages by
-launching Steam from a terminal (`steam 2>&1 | grep -i tdp`) while adjusting the slider.
-It's possible Steam uses a D-Bus call or helper script rather than calling `ryzenadj`
-directly — in that case a wrapper script in a location Steam checks may be needed.
-
-**Unknown**: Whether adding the sudoers rule is sufficient for Steam to invoke `ryzenadj`
-automatically, or whether Steam also requires a helper script or specific environment to
-detect and use it. Whether `ryzenadj` correctly addresses the OLED (Galileo) APU's power
-registers via the Neptune kernel has not been confirmed. This entire proposed fix still
-requires hardware testing.
+**Unknown**: The exact D-Bus method name and signature Steam uses for TDP control. Whether
+a stub service implementing only the TDP method is sufficient or whether Steam probes for
+other methods at startup and refuses to show the slider if they're missing. Whether the
+`power1_cap` sysfs interface provides fine enough granularity to match the QAM slider's
+3–15 W range.
 
 ---
 
