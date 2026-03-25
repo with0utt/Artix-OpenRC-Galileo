@@ -22,8 +22,9 @@ These are inherent limitations of running Artix/OpenRC instead of SteamOS:
   `elogind` config fix exists but has not been tested — see
   [`docs/experimental.md`](experimental.md).
 - **Hardware volume buttons** show the on-screen volume overlay but do not adjust the actual
-  volume level. The QAM volume slider works correctly. Proposed diagnosis steps (untested)
-  in [`docs/experimental.md`](experimental.md).
+  volume level in Game Mode. The QAM volume slider works correctly. **Fix available**: an
+  `acpid`-based workaround is hardware-confirmed working — see
+  [`docs/experimental.md`](experimental.md).
 - **No factory speaker calibration** — the `dsmparam.bin` file is missing, so SMART_AMP
   hardware protection is disabled. The LV2 filter chain provides software-level protection
   instead.
