@@ -91,32 +91,94 @@ The physical volume up/down buttons bring up the volume HUD but the level doesn'
 The QAM volume slider works fine. This suggests the input event is received but the mixer
 call fails.
 
-**Proposed diagnosis**:
+### What has been tested (hardware-confirmed)
 
-1. Confirm `deck` is in the `audio` group:
+1. **`deck` is in the `audio` group** — confirmed, not the issue.
+2. **`pipewire-pulse` is running in Game Mode** — confirmed, not the issue.
+3. **The volume overlay shows the correct sink** (Filter Chain Sink) — the input event
+   reaches Steam and Steam knows the right output device.
+4. **The QAM volume slider works** — PipeWire volume control itself is functional.
 
-   ```bash
-   groups deck   # should include "audio"
-   sudo usermod -aG audio deck
-   # Log out and back in for group change to take effect
-   ```
+The basic diagnosis steps (group membership, autostart, sink selection) have all been
+ruled out. The problem is specific to how Steam handles the hardware volume key events
+vs. how it handles the QAM slider internally.
 
-2. Confirm `pipewire-pulse` is actually running when in Game Mode (Steam depends on it for
-   volume key handling):
+### Root cause (hardware-confirmed)
 
-   ```bash
-   pgrep -a pipewire-pulse
-   ```
+**The issue is Gamescope-specific, not PipeWire.**
 
-   If it's not running, check that `pipewire-pulse.desktop` exists in `~/.config/autostart/`
-   (installed by Phase 5).
+- **`pactl subscribe` shows no volume events** when pressing hardware volume buttons in
+  Game Mode — no volume change command reaches PipeWire at all. The overlay is purely
+  cosmetic.
+- **Volume keys work correctly in Desktop Mode (KDE)** — KDE's Plasma PA applet handles
+  `XF86AudioRaiseVolume`/`XF86AudioLowerVolume` keysyms and calls PipeWire-pulse directly.
 
-3. In Desktop Mode, KDE handles volume keys natively via the PipeWire-PA bridge. If they
-   still don't work there, check **System Settings → Audio** and confirm the active output
-   device is the Filter Chain Sink, not HDMI.
+In embedded (DRM) mode, Gamescope intercepts all input. When it sees a volume key, it
+renders the volume overlay inside the compositor, but it does **not** forward a volume
+change to PipeWire. On SteamOS, Valve's fork of Gamescope likely handles this internally
+(either by calling `libpulse` directly or by delegating to `steamos-manager`). Upstream
+Gamescope does not include this volume-change logic — only the overlay rendering.
 
-**Unknown**: Whether this is purely a group/autostart issue or whether there's a deeper
-problem with how Steam's volume key handler interacts with PipeWire-pulse on OpenRC.
+### Fix — `acpid` volume key handler (hardware-confirmed working)
+
+The hardware volume buttons generate ACPI events (`button/volumeup` and `button/volumedown`)
+that `acpid` can catch independently of Gamescope's input handling. The `wpctl` volume
+command works correctly from a root context via `su - deck` (hardware-confirmed).
+
+**Hardware-confirmed results**: Volume changes correctly in Game Mode, overlay stays in
+sync. In Desktop Mode, KDE also handles volume keys natively, so the handler scripts
+include a guard to skip when KDE is active (prevents double-action).
+
+```bash
+# 1. Install acpid and enable on boot
+sudo pacman -S --needed --noconfirm acpid
+sudo rc-update add acpid default
+sudo rc-service acpid start
+
+# 2. Create handler scripts
+sudo mkdir -p /etc/acpi
+
+sudo tee /etc/acpi/vol-up.sh > /dev/null << 'SCRIPT'
+#!/bin/bash
+# Skip if KDE/Desktop session is active (KDE handles volume keys natively)
+pgrep -x plasmashell > /dev/null && exit 0
+# Run as the deck user so PipeWire session is reachable
+su - deck -c 'XDG_RUNTIME_DIR=/run/user/$(id -u deck) wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+'
+SCRIPT
+
+sudo tee /etc/acpi/vol-down.sh > /dev/null << 'SCRIPT'
+#!/bin/bash
+# Skip if KDE/Desktop session is active (KDE handles volume keys natively)
+pgrep -x plasmashell > /dev/null && exit 0
+su - deck -c 'XDG_RUNTIME_DIR=/run/user/$(id -u deck) wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-'
+SCRIPT
+
+sudo chmod +x /etc/acpi/vol-up.sh /etc/acpi/vol-down.sh
+
+# 3. Create ACPI event rules (event names confirmed via acpi_listen)
+sudo tee /etc/acpi/events/vol-up > /dev/null << 'RULE'
+event=button/volumeup
+action=/etc/acpi/vol-up.sh
+RULE
+
+sudo tee /etc/acpi/events/vol-down > /dev/null << 'RULE'
+event=button/volumedown
+action=/etc/acpi/vol-down.sh
+RULE
+
+# 4. Restart acpid to load rules
+sudo rc-service acpid restart
+```
+
+### Hardware test results
+
+- **Game Mode**: Volume changes correctly with hardware buttons. Overlay stays in sync. ✅
+- **Desktop Mode (KDE)**: Without the `plasmashell` guard, volume changes by 10% per press
+  (double-action: KDE + acpid both fire). With the guard added, volume changes by 5% as
+  expected. ✅
+- **Overlay sync**: Gamescope's volume overlay reflects the acpid-driven change. ✅
+
+**Status**: This fix is fully working. Ready to be promoted to the main guide.
 
 ---
 
