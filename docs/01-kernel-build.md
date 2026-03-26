@@ -36,6 +36,7 @@ Valve's kernel source predates GCC 15's stricter `const` qualifier checks. You *
 strip `-Werror` from the tool Makefiles:
 
 ```bash
+# From inside linux-neptune-615/, enter the source tree:
 cd src/archlinux-linux-neptune
 find tools/ -name "Makefile" -exec sed -i 's/-Werror//g' {} +
 ```
@@ -46,9 +47,13 @@ Modifying tracked git files causes a `-dirty` suffix and version mismatches. The
 fix is to remove `.git` entirely:
 
 ```bash
+# Still inside src/archlinux-linux-neptune/:
 rm -rf .git
 rm -f include/config/kernel.release
 make -s kernelrelease > version
+
+# Verify — should print something like 6.15.8-valve1-2-neptune-615:
+cat version
 ```
 
 ### 5. Build the Kernel
@@ -56,6 +61,7 @@ make -s kernelrelease > version
 Use `-e` to skip re-extraction (which would wipe your fixes):
 
 ```bash
+# Go back to the top-level package directory:
 cd ~/linux-neptune-615
 makepkg -s -e --skippgpcheck
 ```

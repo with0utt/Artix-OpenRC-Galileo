@@ -44,5 +44,6 @@ can switch sessions via `sed`.
   may hang on "Starting launch..." because pressure-vessel expects a portal on D-Bus.
 - Half-rate shading is **not available** in upstream Gamescope (Valve-custom feature).
 - `Relogin=true` means SDDM immediately relaunches the session when it exits. To escape
-  Game Mode from a TTY: change Session to `plasma` in `sddm.conf` first, THEN kill gamescope.
+  Game Mode from a TTY: press `Ctrl+Alt+F3` to get a terminal, run
+  `sudo sed -i 's/^Session=.*/Session=plasma/' /etc/sddm.conf`, then kill gamescope.
 - SDDM uses **VT2** — `Ctrl+Alt+F2` shows a black screen. Use `Ctrl+Alt+F3` or higher for TTYs.

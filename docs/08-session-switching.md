@@ -32,6 +32,8 @@ sudo chmod +x /usr/bin/steamos-session-select
 
 ### 4. Create "Return to Game Mode" Menu Entry
 
+Run as the `deck` user (not root):
+
 ```bash
 mkdir -p "$HOME/.local/share/applications"
 cp configs/return-to-gamemode.desktop "$HOME/.local/share/applications/"
