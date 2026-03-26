@@ -32,7 +32,8 @@ sudo ln -sf /usr/share/pipewire/hardware-profiles/valve-galileo/pipewire.conf.d/
 
 > ⚠️ **Do NOT symlink `filter-chain.conf`** (the mic filter) unless you have
 > `librnnoise_ladspa.so` installed. The module is marked mandatory and PipeWire will
-> **crash on every start** without it.
+> **crash on every start** without it. If you did this accidentally, remove the symlink:
+> `sudo rm /usr/share/pipewire/pipewire.conf.d/filter-chain.conf`
 
 ### 4. Activate Galileo WirePlumber Configs
 
@@ -45,7 +46,8 @@ done
 
 ### 5. Fix UCM Profile (Remove dsmparam.bin Dependency)
 
-The UCM profile references `/etc/dsmparam.bin` (factory calibration) which doesn't exist:
+The UCM profile references `/etc/dsmparam.bin` (factory calibration) which doesn't exist.
+This sed command comments out any line containing "dsmparam" by adding `#` to the start:
 
 ```bash
 sudo sed -i '/dsmparam/s/^/# /' /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi.conf
@@ -54,7 +56,7 @@ sudo sed -i '/dsmparam/s/^/# /' /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi
 ### 6. Set Up PipeWire Autostart for KDE (OpenRC)
 
 Since there are no systemd user services, PipeWire starts via XDG autostart desktop files.
-Copy the files from `configs/autostart/` to `~/.config/autostart/`:
+Copy the files from `configs/autostart/` to `~/.config/autostart/` (run from the repo root):
 
 ```bash
 mkdir -p ~/.config/autostart
@@ -68,11 +70,12 @@ cp configs/autostart/pipewire-pulse.desktop ~/.config/autostart/
 After PipeWire is running, the default sink may be HDMI instead of speakers:
 
 ```bash
-# List sinks to find the Filter Chain Sink ID
+# List sinks — look for a sink named "Filter Chain" or "valve_deck_speakers"
+# under the "Sinks:" section. Note its ID number (the left column).
 wpctl status
 
-# Set the Filter Chain Sink as default (ID may vary)
-wpctl set-default <FILTER_CHAIN_SINK_ID>
+# Set the Filter Chain Sink as default (replace 123 with the actual ID)
+wpctl set-default 123
 ```
 
 ## Key Warnings

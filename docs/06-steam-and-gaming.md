@@ -4,7 +4,8 @@
 
 ### 1. Enable the lib32 Repository
 
-Edit `/etc/pacman.conf` and uncomment the `[lib32]` section, then sync:
+Edit `/etc/pacman.conf` and uncomment the `[lib32]` section (remove the `#` from `[lib32]`
+and the `Include` line below it), then sync:
 
 ```bash
 sudo pacman -Sy
@@ -30,13 +31,13 @@ sudo pacman -S gamescope mangohud
 > `lib32-mangohud` is not in Artix repos. It's not needed — the 64-bit `mangohud` package
 > includes `mangoapp` for the Game Mode overlay.
 
-### 4. Install xdg-desktop-portal
+### 4. Install xdg-desktop-portal (Required)
 
 ```bash
 sudo pacman -S xdg-desktop-portal xdg-desktop-portal-gtk
 ```
 
-> **Critical for Game Mode.** Proton's container runtime (pressure-vessel) communicates with
+> ⚠️ **Do not skip this step.** Proton's container runtime (pressure-vessel) communicates with
 > `xdg-desktop-portal` over D-Bus. Without it, games may hang on "Starting launch..." in
 > Game Mode while working fine in Desktop Mode (where KDE provides its own portal backend).
 

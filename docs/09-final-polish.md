@@ -35,7 +35,7 @@ The `--mangoapp` flag in the Gamescope session script enables the overlay in Gam
 ## Bluetooth
 
 ```bash
-sudo groupadd bluetooth  # if not already created
+sudo groupadd bluetooth 2>/dev/null || true  # harmless if it already exists
 sudo usermod -aG bluetooth deck
 ```
 
@@ -64,7 +64,8 @@ If a KDE "Control input devices" popup still appears after this, see
 ## WirePlumber Audio Routing
 
 The audio routing config prioritizes the Filter Chain Sink over the raw ALSA output.
-`scripts/08-setup-brightness.sh` deploys this automatically. To install manually:
+`scripts/08-setup-brightness.sh` deploys this automatically. To install manually
+(run as the `deck` user, not root):
 
 ```bash
 mkdir -p "$HOME/.config/wireplumber/wireplumber.conf.d"

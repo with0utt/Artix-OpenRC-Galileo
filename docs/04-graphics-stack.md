@@ -16,7 +16,7 @@ sudo pacman -S \
 
 ## Post-Boot Verification
 
-After rebooting into the Neptune kernel, verify:
+**Reboot now** into the Neptune kernel, then verify:
 
 ```bash
 # Check GPU
