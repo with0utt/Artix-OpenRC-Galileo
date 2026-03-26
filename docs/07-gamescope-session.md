@@ -43,6 +43,8 @@ RememberLastSession=false
   `unset WAYLAND_DISPLAY` to prevent nesting.
 - `-r 90` is needed for the OLED's native 90 Hz refresh rate (defaults to 60 Hz without it).
 - `--mangoapp` requires `mangohud` to be installed.
+- The session script starts `xdg-desktop-portal` before Gamescope. Without it, Proton games
+  may hang on "Starting launch..." because pressure-vessel expects a portal on D-Bus.
 - Half-rate shading is **not available** in upstream Gamescope (Valve-custom feature).
 - `Relogin=true` means SDDM immediately relaunches the session when it exits. To escape
   Game Mode from a TTY: change Session to `plasma` in `sddm.conf` first, THEN kill gamescope.

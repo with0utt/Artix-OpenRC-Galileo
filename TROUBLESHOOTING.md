@@ -204,6 +204,34 @@ on the Steam Deck OLED, with causes and solutions.
 - **Cause**: `$LOOPDEV` becomes stale after `losetup -d` or between sessions.
 - **Solution**: Re-create with `sudo losetup -Pf <image>` and recapture the variable.
 
+### 30. Games hang on "Starting launch..." in Game Mode (work fine in Desktop Mode)
+
+- **Cause**: `xdg-desktop-portal` is not running in the Game Mode session. Proton's
+  container runtime (pressure-vessel) tries to connect to the desktop portal over D-Bus
+  when launching a game. In Desktop Mode, KDE provides the portal backend and responds
+  immediately. In Game Mode, no portal is running, so the D-Bus call blocks indefinitely.
+  The behavior appears random per game because the portal timeout depends on race conditions
+  with Proton version internals and shader cache state.
+- **Symptoms**: Game shows "Starting launch..." and never progresses. Backing out and
+  retrying doesn't help. Different games fail on different days. Rebooting has no effect.
+  Toggling Wi-Fi, switching Proton versions, and verifying game files do not help.
+- **Solution**: Install `xdg-desktop-portal` and a backend, and start it in the session
+  script:
+
+  ```bash
+  sudo pacman -S xdg-desktop-portal xdg-desktop-portal-gtk
+  ```
+
+  Then add the following to `gamescope-session.sh` (before the `gamescope` launch line):
+
+  ```bash
+  /usr/libexec/xdg-desktop-portal &
+  sleep 1
+  ```
+
+  The updated `gamescope-session.sh` and `scripts/06-install-steam.sh` in this repo already
+  include this fix.
+
 ---
 
 > For hardware features that are broken but **not yet confirmed fixed** (TDP control,
