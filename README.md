@@ -105,7 +105,11 @@ bash scripts/08-setup-brightness.sh
 | 8 | [Session Switching](docs/08-session-switching.md) | Enable Desktop ↔ Game Mode switching |
 | 9 | [Final Polish](docs/09-final-polish.md) | Brightness control, Bluetooth, performance overlay |
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting issues and submitting changes.
+
 ## License
 
-This project is provided as-is for educational purposes. Valve's firmware, DSP plugins,
+MIT — see [LICENSE](LICENSE) for details. Valve's firmware, DSP plugins,
 and kernel patches are subject to Valve's licensing terms.
