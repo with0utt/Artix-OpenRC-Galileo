@@ -16,15 +16,18 @@ fi
 
 sudo pacman -Sy
 
-echo "[1/3] Installing Steam and dependencies..."
+echo "[1/4] Installing Steam and dependencies..."
 sudo pacman -S --needed --noconfirm steam \
     lib32-vulkan-radeon lib32-mesa lib32-pipewire lib32-libpulse \
     vulkan-radeon gamemode lib32-gamemode
 
-echo "[2/3] Installing Gamescope and MangoHud..."
+echo "[2/4] Installing Gamescope and MangoHud..."
 sudo pacman -S --needed --noconfirm gamescope mangohud
 
-echo "[3/3] Adding user to required groups..."
+echo "[3/4] Installing xdg-desktop-portal..."
+sudo pacman -S --needed --noconfirm xdg-desktop-portal xdg-desktop-portal-gtk
+
+echo "[4/4] Adding user to required groups..."
 sudo usermod -aG input,video,audio,seat deck
 
 echo "=== Steam & Gaming installed! ==="

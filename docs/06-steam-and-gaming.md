@@ -30,7 +30,17 @@ sudo pacman -S gamescope mangohud
 > `lib32-mangohud` is not in Artix repos. It's not needed — the 64-bit `mangohud` package
 > includes `mangoapp` for the Game Mode overlay.
 
-### 4. Add User to Required Groups
+### 4. Install xdg-desktop-portal
+
+```bash
+sudo pacman -S xdg-desktop-portal xdg-desktop-portal-gtk
+```
+
+> **Critical for Game Mode.** Proton's container runtime (pressure-vessel) communicates with
+> `xdg-desktop-portal` over D-Bus. Without it, games may hang on "Starting launch..." in
+> Game Mode while working fine in Desktop Mode (where KDE provides its own portal backend).
+
+### 5. Add User to Required Groups
 
 ```bash
 sudo usermod -aG input,video,audio,seat deck

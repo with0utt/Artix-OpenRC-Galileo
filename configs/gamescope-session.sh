@@ -19,6 +19,12 @@ sleep 2
 export STEAM_MULTIPLE_XWAYLANDS=1
 export XDG_CURRENT_DESKTOP=gamescope
 
+# Start xdg-desktop-portal — required by pressure-vessel (Proton's container
+# runtime).  Without a running portal, games launched via Proton may hang
+# indefinitely on "Starting launch..." while waiting for a D-Bus response.
+/usr/libexec/xdg-desktop-portal &
+sleep 1
+
 gamescope -e \
     --xwayland-count 2 \
     -w 1280 -h 800 \
