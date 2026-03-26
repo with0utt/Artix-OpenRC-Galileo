@@ -20,19 +20,19 @@ echo "[1/7] Installing build dependencies..."
 sudo pacman -S --needed --noconfirm base-devel bc cpio xmlto python pahole
 
 # Step 2: Download kernel source
+echo "[2/7] Downloading kernel source..."
 if [ ! -f "$KERNEL_TAR" ]; then
-    echo "[2/7] Downloading kernel source..."
     wget "$KERNEL_URL"
 else
-    echo "[2/7] Kernel source tarball already exists, skipping download."
+    echo "  Tarball already exists, skipping download."
 fi
 
 # Step 3: Extract
+echo "[3/7] Extracting kernel source..."
 if [ ! -d "$KERNEL_DIR" ]; then
-    echo "[3/7] Extracting kernel source..."
     tar xf "$KERNEL_TAR"
 else
-    echo "[3/7] Kernel directory already exists, skipping extraction."
+    echo "  Kernel directory already exists, skipping extraction."
 fi
 
 cd "$KERNEL_DIR"

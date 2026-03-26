@@ -15,12 +15,20 @@ fi
 IMAGE="$1"
 MOUNTPOINT="/mnt/steamos"
 
+# Clean up loop device and mount on exit (success or failure)
+cleanup() {
+    sudo umount "$MOUNTPOINT" 2>/dev/null || true
+    if [ -n "${LOOPDEV:-}" ]; then
+        sudo losetup -d "$LOOPDEV" 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT
+
 echo "=== Phase 2: Firmware Extraction ==="
 
 # Mount the image
 echo "[1/8] Mounting recovery image..."
-sudo losetup -Pf "$IMAGE"
-LOOPDEV=$(losetup -l | grep "$(basename "$IMAGE")" | awk '{print $1}')
+LOOPDEV=$(sudo losetup --show -Pf "$IMAGE")
 sudo mkdir -p "$MOUNTPOINT"
 sudo mount "${LOOPDEV}p3" "$MOUNTPOINT"
 
@@ -69,9 +77,10 @@ sudo cp -r "$MOUNTPOINT/usr/share/wireplumber/hardware-profiles" /usr/share/wire
 sudo mkdir -p /usr/lib/hwsupport
 sudo cp -r "$MOUNTPOINT/usr/lib/hwsupport/"* /usr/lib/hwsupport/ 2>/dev/null || true
 
-# Clean up
+# Clean up (trap handler will also run, but explicit cleanup is clearer)
 echo "[8/8] Cleaning up..."
 sudo umount "$MOUNTPOINT"
 sudo losetup -d "$LOOPDEV"
+LOOPDEV=""  # Prevent trap from double-detaching
 
 echo "=== Firmware extraction complete! ==="

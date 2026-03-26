@@ -33,8 +33,8 @@ sudo chmod +x /usr/bin/steamos-session-select
 ### 4. Create "Return to Game Mode" Menu Entry
 
 ```bash
-mkdir -p ~/.local/share/applications
-cp configs/return-to-gamemode.desktop ~/.local/share/applications/
+mkdir -p "$HOME/.local/share/applications"
+cp configs/return-to-gamemode.desktop "$HOME/.local/share/applications/"
 ```
 
 ## How It Works

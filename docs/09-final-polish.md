@@ -61,11 +61,12 @@ sudo udevadm trigger --subsystem-match=misc
 If a KDE "Control input devices" popup still appears after this, see
 [`docs/experimental.md`](experimental.md) for a proposed polkit rule.
 
-## Optional: WirePlumber Audio Routing
+## WirePlumber Audio Routing
 
-Copy the audio routing config to prioritize the Filter Chain Sink:
+The audio routing config prioritizes the Filter Chain Sink over the raw ALSA output.
+`scripts/08-setup-brightness.sh` deploys this automatically. To install manually:
 
 ```bash
-mkdir -p ~/.config/wireplumber/wireplumber.conf.d
-cp configs/50-audio-routing.conf ~/.config/wireplumber/wireplumber.conf.d/
+mkdir -p "$HOME/.config/wireplumber/wireplumber.conf.d"
+cp configs/50-audio-routing.conf "$HOME/.config/wireplumber/wireplumber.conf.d/"
 ```

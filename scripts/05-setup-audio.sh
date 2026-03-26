@@ -42,10 +42,10 @@ sudo sed -i '/dsmparam/s/^/# /' /usr/share/alsa/ucm2/conf.d/sof-nau8821-max/HiFi
 # Set up XDG autostart for KDE
 echo "[6/6] Setting up PipeWire autostart for KDE..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-mkdir -p ~/.config/autostart
-cp "$SCRIPT_DIR/configs/autostart/pipewire.desktop" ~/.config/autostart/
-cp "$SCRIPT_DIR/configs/autostart/wireplumber.desktop" ~/.config/autostart/
-cp "$SCRIPT_DIR/configs/autostart/pipewire-pulse.desktop" ~/.config/autostart/
+mkdir -p "$HOME/.config/autostart"
+cp "$SCRIPT_DIR/configs/autostart/pipewire.desktop" "$HOME/.config/autostart/"
+cp "$SCRIPT_DIR/configs/autostart/wireplumber.desktop" "$HOME/.config/autostart/"
+cp "$SCRIPT_DIR/configs/autostart/pipewire-pulse.desktop" "$HOME/.config/autostart/"
 
 echo "=== Audio setup complete! ==="
 echo "After starting PipeWire, set the default sink with:"
