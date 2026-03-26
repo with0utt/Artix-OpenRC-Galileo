@@ -23,17 +23,14 @@ sudo cp configs/gamescope-session.desktop /usr/share/wayland-sessions/gamescope-
 
 ### 3. Configure SDDM Autologin
 
-Edit `/etc/sddm.conf` directly (**not** `.conf.d` — the main config overrides `.conf.d` files):
+Deploy the autologin config (the setup script does this automatically):
 
-```ini
-[Autologin]
-Relogin=true
-Session=gamescope-session
-User=deck
-
-[General]
-RememberLastSession=false
+```bash
+sudo cp configs/sddm.conf.autologin /etc/sddm.conf
 ```
+
+This writes `/etc/sddm.conf` directly (**not** `.conf.d`) so that the session helper
+can switch sessions via `sed`.
 
 ## Key Warnings
 

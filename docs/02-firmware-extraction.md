@@ -18,10 +18,9 @@ Look for: `steamdeck-repair-20250521.10-3.7.7` (or newer OLED-specific image).
 ### 2. Mount the Image
 
 ```bash
-sudo losetup -Pf steamdeck-repair-*.img
-LOOPDEV=$(losetup -l | grep steamdeck | awk '{print $1}')
+LOOPDEV=$(sudo losetup --show -Pf steamdeck-repair-*.img)
 sudo mkdir -p /mnt/steamos
-sudo mount ${LOOPDEV}p3 /mnt/steamos
+sudo mount "${LOOPDEV}p3" /mnt/steamos
 ```
 
 ### 3. Verify It's the OLED Image
@@ -67,7 +66,7 @@ sudo cp -r /mnt/steamos/usr/lib/hwsupport/* /usr/lib/hwsupport/ 2>/dev/null
 
 ```bash
 sudo umount /mnt/steamos
-sudo losetup -d $LOOPDEV
+sudo losetup -d "$LOOPDEV"
 ```
 
 ## Key Warnings
@@ -78,5 +77,5 @@ sudo losetup -d $LOOPDEV
   handles decompression natively — copy them as-is.
 - The `dsmparam.bin` file does **not** exist in the `steamdeck-dsp` package. It's likely
   generated during factory calibration. You'll comment out the UCM reference to it in Phase 5.
-- The `$LOOPDEV` variable can become stale between operations. Re-create it if needed with
-  `sudo losetup -Pf <image>`.
+- Use `losetup --show -Pf` to capture the loop device path directly. The older
+  `losetup -l | grep` approach has a race condition and can match the wrong device.
