@@ -1,4 +1,4 @@
-# CLAUDE.md: Codebase Guide for AI Assistants
+# AI-GUIDE.md: Codebase Guide for AI Assistants
 
 This guide explains the structure, conventions, and workflows of the Artix-OpenRC-Galileo project to help AI assistants understand and contribute effectively.
 
@@ -44,7 +44,7 @@ See `docs/known-limitations.md` for the full list (TDP slider, fan control, Deck
 Artix-OpenRC-Galileo/
 ├── README.md                 # Quick start and project overview
 ├── TROUBLESHOOTING.md        # Documented issues with solutions
-├── CLAUDE.md                 # This file - guide for AI assistants
+├── AI-GUIDE.md               # This file - guide for AI assistants
 ├── .markdownlint.json        # Markdownlint configuration (MD013, MD060 disabled)
 ├── .shellcheckrc             # Shellcheck configuration (severity=warning)
 │
@@ -406,7 +406,7 @@ Only needed during Phase 1 (kernel build):
 
 ---
 
-## 8. Common Tasks for Claude
+## 8. Common Tasks for AI Assistants
 
 ### Research & Documentation Tasks
 
@@ -438,7 +438,7 @@ Only needed during Phase 1 (kernel build):
 - Verify references and update broken links
 - Improve formatting and readability
 
-### What Claude CANNOT Do
+### Limitations
 
 - **Test on actual hardware** - Requires Steam Deck OLED
 - **Run full installation** - Would need hardware access
@@ -517,7 +517,7 @@ Before committing, verify:
 
 ### If Script Changes Fail
 
-- Don't create new error-handling sections in CLAUDE.md
+- Don't create new error-handling sections in AI-GUIDE.md
 - **Add to `TROUBLESHOOTING.md` instead:**
   - Problem statement (what user sees)
   - Root cause (why it happens)
