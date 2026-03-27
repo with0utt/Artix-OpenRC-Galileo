@@ -1,6 +1,8 @@
-Note: As of 3/27/26 I am putting this project on hold until I have more time. The suspend issue is too annoying for me to use this on my Deck so I'll need to work on a kernel patch for this to work and I don't have time currently.
-
 # Artix Linux OpenRC on Steam Deck OLED — Complete Install Guide
+
+> **Note:** As of 3/27/26 I am putting this project on hold until I have more time. The suspend
+> issue is too annoying for me to use this on my Deck so I'll need to work on a kernel patch for
+> this to work and I don't have time currently.
 
 A comprehensive, battle-tested guide for installing **Artix Linux with OpenRC** on the
 **Steam Deck OLED**, with full hardware support including Wi-Fi, audio (speakers + headphones),
